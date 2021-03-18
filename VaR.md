@@ -149,21 +149,62 @@ paramétriques (Gaussienne, Skew Student, GEV et GPD).
 
 ### 2.1 Résolution de *l’exercice 1.1* du cours
 
+``` r
+library(scales)
+library(sn)
+
+VaR_classiques <- function(data, alpha, boot = 100)
+{
+  #VaR Historique
+  Hist <- quantile(data, probs = alpha)
+  Hist <- unname(Hist)
+  Hist <- percent(Hist, 0.01)
+  
+  #VaR Bootstrap
+  x <- numeric(boot)
+  for (j in 1:boot)
+  {
+    databoot <- sample(data, replace = T)
+    x[j] <- quantile(databoot, probs = alpha)
+  }
+  Boot <- mean(x)
+  Boot <- percent(Boot, 0.01)
+  
+  # VaR Gaussienne
+  Gauss <- mean(data) + sd(data) * qnorm(alpha, 0, 1)
+  Gauss <- percent(Gauss, 0.01)
+  
+  # VaR skew Student
+  esti <- st.mple(y = data)
+  Skt <- qst(alpha, esti$dp[1], esti$dp[2], esti$dp[3], esti$dp[4])
+  Skt <- percent(Skt, 0.01)
+  
+  return(c(Historique = Hist, Bootstrap = Boot, Gaussienne = Gauss, Skew_Student = Skt))
+}
+```
+
 Voici ci-dessous les VaR demandées dans *l’exercice 1.1* pour les 3
 indices avec alpha = 1%.
+
+``` r
+library(pander)
+l_1 <- list(data = renta, alpha = 0.01)
+VaR_1 <-  pmap(l_1, VaR_classiques)
+pander(VaR_1)
+```
 
   - **France**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-4.45%   |  \-4.40%  |  \-3.44%   |    \-4.41%    |
+    |  \-4.45%   |  \-4.42%  |  \-3.44%   |    \-4.41%    |
     
 
   - **BRIC**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-4.04%   |  \-4.05%  |  \-3.22%   |    \-4.12%    |
+    |  \-4.04%   |  \-4.04%  |  \-3.22%   |    \-4.12%    |
     
 
   - **US\_Corporate\_Bonds**:
@@ -178,25 +219,31 @@ indices avec alpha = 1%.
 Voici ci-dessous les VaR demandées dans *l’exercice 1.1* pour les 3
 indices avec alpha = 0.1%.
 
+``` r
+l_01 <- list(data = renta, alpha = 0.001)
+VaR_01 <- pmap(l_01, VaR_classiques)
+pander(VaR_01)
+```
+
   - **France**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-7.62%   |  \-7.81%  |  \-4.59%   |   \-10.32%    |
+    |  \-7.62%   |  \-7.78%  |  \-4.59%   |   \-10.32%    |
     
 
   - **BRIC**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-8.56%   |  \-8.59%  |  \-4.29%   |    \-9.20%    |
+    |  \-8.56%   |  \-8.61%  |  \-4.29%   |    \-9.20%    |
     
 
   - **US\_Corporate\_Bonds**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-1.74%   |  \-1.86%  |  \-0.95%   |    \-1.56%    |
+    |  \-1.74%   |  \-1.85%  |  \-0.95%   |    \-1.56%    |
     
 
 <!-- end of list -->
