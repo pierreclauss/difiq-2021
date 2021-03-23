@@ -197,21 +197,21 @@ pander(VaR_1)
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-4.45%   |  \-4.42%  |  \-3.44%   |    \-4.41%    |
+    |  \-4.45%   |  \-4.41%  |  \-3.44%   |    \-4.41%    |
     
 
   - **BRIC**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-4.04%   |  \-4.04%  |  \-3.22%   |    \-4.12%    |
+    |  \-4.04%   |  \-4.00%  |  \-3.22%   |    \-4.12%    |
     
 
   - **US\_Corporate\_Bonds**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-0.81%   |  \-0.82%  |  \-0.71%   |    \-0.84%    |
+    |  \-0.81%   |  \-0.81%  |  \-0.71%   |    \-0.84%    |
     
 
 <!-- end of list -->
@@ -229,21 +229,21 @@ pander(VaR_01)
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-7.62%   |  \-7.78%  |  \-4.59%   |   \-10.32%    |
+    |  \-7.62%   |  \-7.86%  |  \-4.59%   |   \-10.32%    |
     
 
   - **BRIC**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-8.56%   |  \-8.61%  |  \-4.29%   |    \-9.20%    |
+    |  \-8.56%   |  \-8.41%  |  \-4.29%   |    \-9.20%    |
     
 
   - **US\_Corporate\_Bonds**:
     
     | Historique | Bootstrap | Gaussienne | Skew\_Student |
     | :--------: | :-------: | :--------: | :-----------: |
-    |  \-1.74%   |  \-1.85%  |  \-0.95%   |    \-1.56%    |
+    |  \-1.74%   |  \-1.86%  |  \-0.95%   |    \-1.56%    |
     
 
 <!-- end of list -->
@@ -255,10 +255,55 @@ partir duquel il est raisonnable de penser que les extrêmes suivent une
 loi GPD. Cela se fait grâce au mean-excess plot : le seuil optimal est
 la valeur à partir de laquelle la tendance est croissante.
 
-![](VaR_files/figure-gfm/var%20TVE-1.png)<!-- -->![](VaR_files/figure-gfm/var%20TVE-2.png)<!-- -->![](VaR_files/figure-gfm/var%20TVE-3.png)<!-- -->
+``` r
+library(evir)
+
+meplot(-renta$France[renta$France < 0])
+```
+
+![](VaR_files/figure-gfm/var%20TVE-1.png)<!-- -->
+
+``` r
+meplot(-renta$BRIC[renta$BRIC < 0])
+```
+
+![](VaR_files/figure-gfm/var%20TVE-2.png)<!-- -->
+
+``` r
+meplot(-renta$US_Corporate_Bonds[renta$US_Corporate_Bonds < 0])
+```
+
+![](VaR_files/figure-gfm/var%20TVE-3.png)<!-- -->
+
+``` r
+VaR_TVE <- function(data, alpha, bloc = 21, seuil = 0.01)
+{
+  # VaR GEV
+  g1 <- gev(-data, bloc)
+  alphaGEV <- 1 - bloc * alpha
+  GEV <- -qgev(alphaGEV, g1$par.ests["xi"], g1$par.ests["mu"], g1$par.ests["sigma"])
+  GEV <- unname(GEV)
+  GEV <- percent(GEV, 0.01)
+  
+  # VaR GPD
+  g2 <- gpd(-data, seuil)
+  p <- length(g2$data) / length(data)
+  GPD <- -qgpd(1 - alpha / p, g2$par.ests["xi"], seuil, g2$par.ests["beta"])
+  GPD <- unname(GPD)
+  GPD <- percent(GPD, 0.01)
+  
+  return(c(GEV = GEV, GPD = GPD))
+}
+```
 
 Voici ci-dessous les VaR TVE demandées dans *l’exercice 2.1* pour les 3
 indices avec alpha = 1%.
+
+``` r
+l_1 <- list(data = renta, alpha = 0.01, seuil = c(0.03, 0.03, 0.006))
+VaR_1 <-  pmap(l_1, VaR_TVE)
+pander(VaR_1)
+```
 
   - **France**:
     
@@ -285,6 +330,12 @@ indices avec alpha = 1%.
 
 Voici ci-dessous les VaR TVE demandées dans *l’exercice 2.1* pour les 3
 indices avec alpha = 0.1%.
+
+``` r
+l_01 <- list(data = renta, alpha = 0.001, seuil = c(0.03, 0.03, 0.006))
+VaR_01 <- pmap(l_01, VaR_TVE)
+pander(VaR_01)
+```
 
   - **France**:
     
