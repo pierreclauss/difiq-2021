@@ -136,11 +136,40 @@ Je réalise 1 million de simulations de pertes.
 n <- 1e6
 ```
 
+``` r
+u1 <- runif(n)
+u2 <- runif(n)
+L1 <- (u1 < PD1) * rbeta(n, a1, b1) * Nominal
+L2 <- (u2 < PD2) * rbeta(n, a2, b2) * Nominal
+L = L1 + L2
+CreditVaR = quantile(L, 0.999)
+```
+
 En modélisant la structure de dépendance par une copule produit, la
 CreditVaR à 1 an à 99.9% est égale à 1000.
 
+``` r
+rcop <- rCopula(n, normalCopula(correl_normal))
+u1 <- rcop[, 1]
+u2 <- rcop[, 2]
+L1 <- (u1 < PD1) * rbeta(n, a1, b1) * Nominal
+L2 <- (u2 < PD2) * rbeta(n, a2, b2) * Nominal
+L = L1 + L2
+CreditVaR = quantile(L, 0.999)
+```
+
 En modélisant la structure de dépendance par une copule Gaussienne, la
 CreditVaR à 1 an à 99.9% est égale à 1143.
+
+``` r
+rcop <- rCopula(n, tCopula(param = correl_t, df = degre))
+u1 <- rcop[, 1]
+u2 <- rcop[, 2]
+L1 <- (u1 < PD1) * rbeta(n, a1, b1) * Nominal
+L2 <- (u2 < PD2) * rbeta(n, a2, b2) * Nominal
+L = L1 + L2
+CreditVaR = quantile(L, 0.999)
+```
 
 En modélisant la structure de dépendance par une copule Student, la
 CreditVaR à 1 an à 99.9% est égale à 1537.
